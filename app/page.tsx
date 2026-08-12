@@ -5,78 +5,104 @@ import * as React from "react"
 import {
   getStoredLibrarySolutions,
   getStoredProjects,
+  getStoredPedidos,
   saveStoredLibrarySolutions,
   saveStoredProjects,
+  saveStoredPedidos,
   type AreaKey,
   type LibrarySolution,
+  type Pedido,
   type Project,
 } from "@/lib/suite-data"
 import { AppSidebar, type NavKey } from "@/components/app-sidebar"
+import { AgendaTrabajoView } from "@/components/agenda-trabajo-view"
+import { ClientesView } from "@/components/clientes-view"
 import { BudgetSummaryView } from "@/components/budget-summary-view"
+import { CalculoViaticosView } from "@/components/calculo-viaticos-view"
+import { ConfiguracionSeguridadView } from "@/components/configuracion-seguridad-view"
+import { CuentaCorrienteView } from "@/components/cuenta-corriente-view"
 import { Dashboard } from "@/components/dashboard"
+import { FotovoltaicaView } from "@/components/fotovoltaica-view"
+import { InicioView } from "@/components/inicio-view"
 import { LibraryView } from "@/components/library-view"
 import { MaterialsSummaryView } from "@/components/materials-summary-view"
 import { NewWorkDialog } from "@/components/new-work-dialog"
+import { PedidosView } from "@/components/pedidos-view"
+import { NuevoPedidoDialog } from "@/components/nuevo-pedido-dialog"
 import { ProjectView } from "@/components/project-view"
+import { ProveedoresCotizacionesView } from "@/components/proveedores-cotizaciones-view"
+import { ReportesIndicadoresView } from "@/components/reportes-indicadores-view"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { ZapIcon } from "lucide-react"
 
-const NAV_COPY: Record<NavKey, { heading: string; subheading: string }> = {
-  principal: {
-    heading: "Mesa de trabajo",
-    subheading:
-      "Empieza por buscar una solución que ya resolviste. Duplícala y adáptala al nuevo trabajo para ganar tiempo.",
+const DEFAULT_PEDIDOS: Pedido[] = [
+  {
+    id: "PD-2026-001",
+    client: "NAVAR",
+    contact: "Ing. Vera",
+    requirementType: "mantenimiento",
+    description: "Mantenimiento correctivo molino norte. Falla en contactor principal.",
+    priority: "alta",
+    status: "en_curso",
+    date: "11/08/26",
+    nextAction: "Comprar contactor Siemens 3RT1026",
   },
-  buscar: {
-    heading: "Buscar trabajo",
-    subheading:
-      "Busca por título, cliente, referencia de material o área técnica entre todas tus soluciones.",
+  {
+    id: "PD-2026-002",
+    client: "ISOMAD",
+    contact: "Hugo / Miguel Angel",
+    requirementType: "mantenimiento",
+    description: "Mantenimiento correctivo tablero secadero.",
+    priority: "urgente",
+    status: "pendiente",
+    date: "11/08/26",
+    nextAction: "Visita técnica",
   },
-  recientes: {
-    heading: "Trabajos recientes",
-    subheading: "Los últimos trabajos en los que has estado trabajando.",
+  {
+    id: "PD-2026-003",
+    client: "Roca Sur",
+    requirementType: "presupuesto_nuevo",
+    description: "Sistema fotovoltaico on-grid 10 kW para depósito.",
+    priority: "normal",
+    status: "nuevo",
+    date: "10/08/26",
+    nextAction: "Enviar presupuesto",
   },
-  biblioteca: {
-    heading: "Biblioteca de soluciones",
-    subheading:
-      "Todo tu histórico de obra, listo para reutilizar. Cada trabajo es una plantilla en potencia.",
-  },
-  materiales: {
-    heading: "Maestro de Materiales",
-    subheading: "Catálogo unificado de materiales y equipos utilizados en tus soluciones.",
-  },
-  presupuestos: {
-    heading: "Presupuestos y Valoraciones",
-    subheading: "Resumen de valoraciones económicas y mano de obra de tus proyectos.",
-  },
-  documentacion: {
-    heading: "Documentación de Obra",
-    subheading: "Generador de memorias técnicas, fichas de componentes y ofertas.",
-  },
-}
+]
 
 export default function Page() {
   const [projects, setProjects] = React.useState<Project[]>([])
   const [librarySolutions, setLibrarySolutions] = React.useState<LibrarySolution[]>([])
+  const [pedidos, setPedidos] = React.useState<Pedido[]>([])
   const [isLoaded, setIsLoaded] = React.useState(false)
-  const [activeNav, setActiveNav] = React.useState<NavKey>("principal")
+
+  const [activeNav, setActiveNav] = React.useState<NavKey>("inicio")
   const [activeArea, setActiveArea] = React.useState<AreaKey | null>(null)
   const [query, setQuery] = React.useState("")
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
+
+  // Project dialog (existing)
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [template, setTemplate] = React.useState<Project | null>(null)
 
-  // Load stored projects and library solutions on client mount
+  // New Pedido dialog
+  const [pedidoDialogOpen, setPedidoDialogOpen] = React.useState(false)
+
+  // Load stored data on client mount
   React.useEffect(() => {
     setProjects(getStoredProjects())
     setLibrarySolutions(getStoredLibrarySolutions())
+    const storedPedidos = getStoredPedidos()
+    setPedidos(storedPedidos.length > 0 ? storedPedidos : DEFAULT_PEDIDOS)
     setIsLoaded(true)
   }, [])
 
+  // ── Projects ──────────────────────────────────────────────────────────
   function updateProjects(updater: (prev: Project[]) => Project[]) {
     setProjects((prev) => {
       const next = updater(prev)
@@ -85,6 +111,7 @@ export default function Page() {
     })
   }
 
+  // ── Library ───────────────────────────────────────────────────────────
   function updateLibrarySolutions(updater: (prev: LibrarySolution[]) => LibrarySolution[]) {
     setLibrarySolutions((prev) => {
       const next = updater(prev)
@@ -93,6 +120,16 @@ export default function Page() {
     })
   }
 
+  // ── Pedidos ───────────────────────────────────────────────────────────
+  function updatePedidos(updater: (prev: Pedido[]) => Pedido[]) {
+    setPedidos((prev) => {
+      const next = updater(prev)
+      saveStoredPedidos(next)
+      return next
+    })
+  }
+
+  // ── Project Handlers ──────────────────────────────────────────────────
   const selectedProject = projects.find((p) => p.id === selectedId) ?? null
 
   const filtered = React.useMemo(() => {
@@ -106,9 +143,7 @@ export default function Page() {
         p.location.toLowerCase().includes(q) ||
         p.id.toLowerCase().includes(q) ||
         p.materials.some(
-          (m) =>
-            m.name.toLowerCase().includes(q) ||
-            m.ref.toLowerCase().includes(q),
+          (m) => m.name.toLowerCase().includes(q) || m.ref.toLowerCase().includes(q),
         )
       )
     })
@@ -118,16 +153,6 @@ export default function Page() {
     setActiveNav(key)
     setActiveArea(null)
     setSelectedId(null)
-  }
-
-  function handleArea(key: AreaKey) {
-    setActiveArea((prev) => (prev === key ? null : key))
-    setSelectedId(null)
-  }
-
-  function openNewWork() {
-    setTemplate(null)
-    setDialogOpen(true)
   }
 
   function handleDuplicate(project: Project) {
@@ -175,9 +200,7 @@ export default function Page() {
   function handleSaveLibrarySolution(solution: LibrarySolution) {
     updateLibrarySolutions((prev) => {
       const exists = prev.some((s) => s.id === solution.id)
-      if (exists) {
-        return prev.map((s) => (s.id === solution.id ? solution : s))
-      }
+      if (exists) return prev.map((s) => (s.id === solution.id ? solution : s))
       return [solution, ...prev]
     })
   }
@@ -186,95 +209,236 @@ export default function Page() {
     updateLibrarySolutions((prev) => prev.filter((s) => s.id !== id))
   }
 
-  const copy = NAV_COPY[activeNav]
+  function handleSavePedido(pedido: Pedido, createTarget?: "trabajo" | "presupuesto") {
+    updatePedidos((prev) => [pedido, ...prev])
+    setPedidoDialogOpen(false)
+    if (createTarget === "trabajo") {
+      handleNav("agenda")
+    } else if (createTarget === "presupuesto") {
+      handleNav("presupuestos")
+    }
+  }
+
+  function openNuevoPedido() {
+    setPedidoDialogOpen(true)
+  }
+
+  // ── Breadcrumb Label ──────────────────────────────────────────────────
+  function getBreadcrumb() {
+    if (selectedProject) return `/ ${selectedProject.client} — ${selectedProject.title}`
+    const labels: Partial<Record<NavKey, string>> = {
+      inicio: "/ Inicio",
+      buscador: "/ Buscador",
+      clientes: "/ Clientes",
+      pedidos: "/ Pedidos",
+      agenda: "/ Agenda de Trabajo",
+      ordenes: "/ Órdenes de Trabajo",
+      presupuestos: "/ Presupuestos",
+      aprobaciones: "/ Aprobaciones",
+      materiales: "/ Materiales",
+      proveedores: "/ Proveedores y Cotizaciones",
+      equipo: "/ Equipo y Horas",
+      resumenes: "/ Resúmenes",
+      facturacion: "/ Facturación",
+      cuentas: "/ Cuentas Corrientes",
+      viaticos: "/ Viáticos",
+      fotovoltaica: "/ Fotovoltaica",
+      biblioteca: "/ Biblioteca de Soluciones",
+      documentacion: "/ Documentación",
+      compartir: "/ Compartir",
+      reportes: "/ Reportes e Indicadores",
+      alertas: "/ Alertas",
+      configuracion: "/ Configuración",
+      usuarios: "/ Usuarios y Seguridad",
+    }
+    return labels[activeNav] ?? ""
+  }
+
+  // ── Render the active view ────────────────────────────────────────────
+  function renderView() {
+    if (!isLoaded) {
+      return (
+        <div className="flex items-center justify-center p-12 text-sm text-muted-foreground">
+          Cargando EI SUITE...
+        </div>
+      )
+    }
+
+    if (selectedProject) {
+      return (
+        <ProjectView
+          project={selectedProject}
+          onBack={() => setSelectedId(null)}
+          onDuplicate={handleDuplicate}
+          onUpdateProject={handleUpdateProject}
+          onDeleteProject={handleDeleteProject}
+          onSaveToLibrary={handleSaveLibrarySolution}
+        />
+      )
+    }
+
+    switch (activeNav) {
+      case "inicio":
+        return (
+          <InicioView
+            pedidos={pedidos}
+            onNewPedido={openNuevoPedido}
+            onNavigate={handleNav}
+            onOpenProject={(id) => setSelectedId(id)}
+          />
+        )
+
+      case "clientes":
+        return (
+          <ClientesView
+            onNewPedido={openNuevoPedido}
+            onNavigate={handleNav}
+          />
+        )
+
+      case "pedidos":
+        return (
+          <PedidosView
+            pedidos={pedidos}
+            onNewPedido={openNuevoPedido}
+            onUpdatePedido={(updated) =>
+              updatePedidos((prev) =>
+                prev.map((p) => (p.id === updated.id ? updated : p)),
+              )
+            }
+            onDeletePedido={(id) =>
+              updatePedidos((prev) => prev.filter((p) => p.id !== id))
+            }
+            onSavePedido={handleSavePedido}
+          />
+        )
+
+      case "agenda":
+        return (
+          <AgendaTrabajoView
+            pedidos={pedidos}
+            onNewPedido={openNuevoPedido}
+          />
+        )
+
+      case "biblioteca":
+        return (
+          <LibraryView
+            solutions={librarySolutions}
+            activeArea={activeArea}
+            onUseTemplate={handleUseLibrarySolution}
+            onSaveSolution={handleSaveLibrarySolution}
+            onDeleteSolution={handleDeleteLibrarySolution}
+          />
+        )
+
+      case "materiales":
+        return (
+          <MaterialsSummaryView
+            projects={projects}
+            onOpenProject={(id) => {
+              setSelectedId(id)
+              setActiveNav("buscador")
+            }}
+          />
+        )
+
+      case "presupuestos":
+      case "resumenes":
+        return (
+          <BudgetSummaryView
+            projects={projects}
+            onOpenProject={(id) => {
+              setSelectedId(id)
+              setActiveNav("buscador")
+            }}
+          />
+        )
+
+      case "proveedores":
+        return <ProveedoresCotizacionesView />
+
+      case "viaticos":
+        return <CalculoViaticosView />
+
+      case "fotovoltaica":
+        return <FotovoltaicaView />
+
+      case "cuentas":
+      case "facturacion":
+        return <CuentaCorrienteView />
+
+      case "reportes":
+        return <ReportesIndicadoresView />
+
+      case "configuracion":
+      case "usuarios":
+        return <ConfiguracionSeguridadView />
+
+      // For not-yet-built views, show the standard Dashboard
+      default:
+        return (
+          <Dashboard
+            heading={activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}
+            subheading="Vista en construcción. Pronto disponible."
+            query={query}
+            onQuery={setQuery}
+            activeArea={activeArea}
+            projects={filtered}
+            onOpen={setSelectedId}
+            onNewWork={() => {
+              setTemplate(null)
+              setDialogOpen(true)
+            }}
+          />
+        )
+    }
+  }
 
   return (
     <SidebarProvider>
       <AppSidebar
         activeNav={activeNav}
-        activeArea={activeArea}
         onNav={handleNav}
-        onArea={handleArea}
-        onNewWork={openNewWork}
+        onNewPedido={openNuevoPedido}
       />
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-sm no-print">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-1 h-4" />
-          <span className="font-mono text-sm font-medium tracking-tight">
-            EL SUITE
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {selectedProject
-              ? `/ Proyecto (${selectedProject.id})`
-              : activeNav === "biblioteca"
-              ? "/ Biblioteca de Soluciones"
-              : activeNav === "materiales"
-              ? "/ Maestro de Materiales"
-              : activeNav === "presupuestos"
-              ? "/ Presupuestos"
-              : "/ Panel"}
+        {/* ── Header ───────────────────────────────────────────────── */}
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-slate-900 text-white px-4 no-print">
+          <SidebarTrigger className="-ml-1 text-white hover:bg-slate-800 rounded" />
+          <Separator orientation="vertical" className="mr-1 h-5 bg-slate-700" />
+          <div className="flex items-center gap-2">
+            <ZapIcon className="size-4 text-blue-400" />
+            <span className="font-mono text-sm font-extrabold tracking-tight text-white">
+              EI SUITE
+            </span>
+            <span className="text-xs text-slate-400 font-medium hidden sm:block">
+              Electricidad Industrial
+            </span>
+          </div>
+          <span className="text-xs text-slate-400 ml-1 font-mono hidden sm:block">
+            {getBreadcrumb()}
           </span>
         </header>
 
-        <main className="min-h-[calc(100svh-3.5rem)]">
-          {!isLoaded ? (
-            <div className="flex items-center justify-center p-12 text-sm text-muted-foreground">
-              Cargando mesa de trabajo...
-            </div>
-          ) : selectedProject ? (
-            <ProjectView
-              project={selectedProject}
-              onBack={() => setSelectedId(null)}
-              onDuplicate={handleDuplicate}
-              onUpdateProject={handleUpdateProject}
-              onDeleteProject={handleDeleteProject}
-              onSaveToLibrary={handleSaveLibrarySolution}
-            />
-          ) : activeNav === "biblioteca" ? (
-            <LibraryView
-              solutions={librarySolutions}
-              activeArea={activeArea}
-              onUseTemplate={handleUseLibrarySolution}
-              onSaveSolution={handleSaveLibrarySolution}
-              onDeleteSolution={handleDeleteLibrarySolution}
-            />
-          ) : activeNav === "materiales" ? (
-            <MaterialsSummaryView
-              projects={projects}
-              onOpenProject={(id) => {
-                setSelectedId(id)
-                setActiveNav("principal")
-              }}
-            />
-          ) : activeNav === "presupuestos" ? (
-            <BudgetSummaryView
-              projects={projects}
-              onOpenProject={(id) => {
-                setSelectedId(id)
-                setActiveNav("principal")
-              }}
-            />
-          ) : (
-            <Dashboard
-              heading={copy.heading}
-              subheading={copy.subheading}
-              query={query}
-              onQuery={setQuery}
-              activeArea={activeArea}
-              projects={filtered}
-              onOpen={setSelectedId}
-              onNewWork={openNewWork}
-            />
-          )}
+        {/* ── Main Content ─────────────────────────────────────────── */}
+        <main className="min-h-[calc(100svh-3.5rem)] bg-slate-50">
+          {renderView()}
         </main>
       </SidebarInset>
 
+      {/* ── Dialogs ──────────────────────────────────────────────────── */}
       <NewWorkDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         template={template}
         onCreate={handleCreate}
+      />
+
+      <NuevoPedidoDialog
+        open={pedidoDialogOpen}
+        onOpenChange={setPedidoDialogOpen}
+        onSavePedido={handleSavePedido}
       />
     </SidebarProvider>
   )

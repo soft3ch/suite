@@ -31,6 +31,8 @@ export type Material = {
   qty: number
   unit: string
   unitPrice?: number
+  category?: string
+  preferredSupplier?: string
 }
 
 export type ProjectFile = {
@@ -60,6 +62,21 @@ export type Project = {
   isTemplate?: boolean
 }
 
+export type PedidoPriority = "normal" | "alta" | "urgente"
+export type PedidoStatus = "nuevo" | "en_curso" | "esperando_material" | "terminado"
+
+export type Pedido = {
+  id: string
+  client: string
+  contact?: string
+  requirementType: "presupuesto_nuevo" | "modificacion_presupuesto" | "mantenimiento" | "proyecto_solar" | "automatizacion"
+  description: string
+  priority: PedidoPriority
+  status: PedidoStatus
+  date: string
+  nextAction: string
+}
+
 export type LibrarySolution = {
   id: string
   title: string
@@ -69,7 +86,94 @@ export type LibrarySolution = {
   notes: string[]
   materials: Material[]
   recommendedHours: number
+  reuseRatePercent?: number
 }
+
+export type ViaticoItem = {
+  id: string
+  workName: string
+  clientName: string
+  date: string
+  origin: string
+  destination: string
+  distanceKm: number
+  vehicle: string
+  fuelConsumption: number // L / 100km
+  fuelPrice: number
+  fuelCost: number
+  foodCost: number
+  tollsCost: number
+  lodgingCost: number
+  otherCost: number
+  totalCost: number
+}
+
+export type MovimientoCuenta = {
+  id: string
+  fecha: string
+  tipo: "Factura" | "Pago" | "Ajuste"
+  referencia: string
+  debe: number
+  haber: number
+  saldo: number
+}
+
+export type CotizacionProveedor = {
+  materialName: string
+  qty: number
+  unit: string
+  cableATierraPrice: number
+  solarAPrice: number
+  solarBPrice: number
+  chosenSupplier: string
+}
+
+export const DEFAULT_PEDIDOS: Pedido[] = [
+  {
+    id: "PD-2026-001",
+    client: "NAVAR",
+    contact: "Hugo / Miguel Angel",
+    requirementType: "mantenimiento",
+    description: "Mantenimiento correctivo en tablero secadero. Revisión de contactores y controlador.",
+    priority: "alta",
+    status: "terminado",
+    date: "11/08/2026",
+    nextAction: "Generar resumen",
+  },
+  {
+    id: "PD-2026-002",
+    client: "ISOMED",
+    contact: "Cristian",
+    requirementType: "automatizacion",
+    description: "Tablero de servicio para motor trifásico 75 HP con variador de velocidad.",
+    priority: "normal",
+    status: "en_curso",
+    date: "11/08/2026",
+    nextAction: "Registrar horas",
+  },
+  {
+    id: "PD-2026-003",
+    client: "SOLAR",
+    contact: "Finca La Encina",
+    requirementType: "proyecto_solar",
+    description: "Presupuesto proyecto solar 10 kWp on-grid en cubierta de chasa.",
+    priority: "urgente",
+    status: "esperando_material",
+    date: "10/08/2026",
+    nextAction: "Preparar materiales",
+  },
+  {
+    id: "PD-2026-004",
+    client: "YPF",
+    contact: "Estación de servicio",
+    requirementType: "presupuesto_nuevo",
+    description: "Cartel de entrada e iluminación perimetral LED.",
+    priority: "normal",
+    status: "nuevo",
+    date: "09/08/2026",
+    nextAction: "Comprar / retirar",
+  },
+]
 
 export const DEFAULT_LIBRARY_SOLUTIONS: LibrarySolution[] = [
   {
@@ -79,6 +183,7 @@ export const DEFAULT_LIBRARY_SOLUTIONS: LibrarySolution[] = [
     area: "automatismo",
     tags: ["PLC/Relé", "Bombeo", "Sensores"],
     recommendedHours: 8,
+    reuseRatePercent: 97,
     notes: [
       "Incluye protección por marcha en seco.",
       "Conectar electrodo común a chasis si el depósito es metálico.",
@@ -97,6 +202,7 @@ export const DEFAULT_LIBRARY_SOLUTIONS: LibrarySolution[] = [
     area: "electricidad",
     tags: ["Tableros", "Protecciones", "Motores"],
     recommendedHours: 16,
+    reuseRatePercent: 92,
     notes: [
       "Diferenciales superinmunizados SI para evitar disparos por armónicos.",
       "Reservar 20% de espacio libre en carril DIN.",
@@ -115,6 +221,7 @@ export const DEFAULT_LIBRARY_SOLUTIONS: LibrarySolution[] = [
     area: "solar",
     tags: ["On-Grid", "Híbrido", "Inversor"],
     recommendedHours: 24,
+    reuseRatePercent: 88,
     notes: [
       "Orientación recomendada: Sur 30º.",
       "Comprobar tirada de cable DC < 25m para no superar 1% de caída de tensión.",
@@ -221,85 +328,13 @@ export const PROJECTS: Project[] = [
       { id: "f3", name: "memoria-tecnica.pdf", kind: "pdf" },
     ],
   },
-  {
-    id: "AUT-1993",
-    title: "Control de nivel y bombeo en depósito",
-    client: "Riegos del Sur",
-    location: "Ciempozuelos",
-    area: "automatismo",
-    updatedAt: "hace 2 semanas",
-    status: "finalizado",
-    laborHours: 8,
-    laborRatePerHour: 45,
-    marginPercent: 20,
-    taxRate: 21,
-    need: "Automatizar el llenado de un depósito de 20.000 L con sondas de nivel y arranque/paro automático de bomba, más alarma por marcha en seco.",
-    notes: [
-      "Relé de nivel con 3 electrodos (mín, máx, común).",
-      "Protección de bomba contra marcha en seco.",
-    ],
-    materials: [
-      { id: "m1", ref: "RM35LM", name: "Relé de control de nivel", qty: 1, unit: "ud", unitPrice: 85.50 },
-      { id: "m2", ref: "ELEC-INOX", name: "Juego electrodos inox + soporte", qty: 1, unit: "kit", unitPrice: 32.00 },
-      { id: "m3", ref: "LC1D12", name: "Contactor 12A", qty: 1, unit: "ud", unitPrice: 28.00 },
-    ],
-    files: [{ id: "f1", name: "deposito.jpg", kind: "foto" }],
-  },
-  {
-    id: "ELE-1042",
-    title: "Reforma de iluminación LED en taller",
-    client: "Mecánica Delgado",
-    location: "Fuenlabrada",
-    area: "electricidad",
-    updatedAt: "hace 3 semanas",
-    status: "finalizado",
-    laborHours: 10,
-    laborRatePerHour: 40,
-    marginPercent: 15,
-    taxRate: 21,
-    need: "Sustitución de campanas industriales por luminarias LED de alta bahía, con nuevo circuito y detección de presencia en zona de almacén.",
-    notes: [
-      "Nivel de iluminación objetivo: 500 lux en zona de trabajo.",
-      "Detección de presencia solo en almacén.",
-    ],
-    materials: [
-      { id: "m1", ref: "HB-150W", name: "Campana LED alta bahía 150W", qty: 8, unit: "ud", unitPrice: 75.00 },
-      { id: "m2", ref: "PIR-360", name: "Detector presencia 360º", qty: 2, unit: "ud", unitPrice: 32.00 },
-      { id: "m3", ref: "CAB-3x2.5", name: "Cable 3x2.5 mm² libre halógenos", qty: 40, unit: "m", unitPrice: 1.40 },
-    ],
-    files: [
-      { id: "f1", name: "taller-antes.jpg", kind: "foto" },
-      { id: "f2", name: "taller-despues.jpg", kind: "foto" },
-    ],
-  },
-  {
-    id: "SOL-0710",
-    title: "Bombeo solar directo para pozo agrícola",
-    client: "Finca La Encina",
-    location: "Colmenar de Oreja",
-    area: "solar",
-    updatedAt: "hace 1 mes",
-    status: "finalizado",
-    laborHours: 18,
-    laborRatePerHour: 45,
-    marginPercent: 20,
-    taxRate: 21,
-    need: "Sistema de bombeo solar directo sin baterías para pozo de 45 m, con variador solar y protección de la bomba sumergible.",
-    notes: [
-      "Variador solar con seguimiento del punto de máxima potencia.",
-      "Sonda de nivel de pozo para paro por bajo nivel.",
-    ],
-    materials: [
-      { id: "m1", ref: "JKM440N", name: "Panel monocristalino 440W", qty: 8, unit: "ud", unitPrice: 105.00 },
-      { id: "m2", ref: "PS2-1800", name: "Variador solar de bombeo", qty: 1, unit: "ud", unitPrice: 650.00 },
-      { id: "m3", ref: "SUB-2.2KW", name: "Bomba sumergible 2.2 kW", qty: 1, unit: "ud", unitPrice: 420.00 },
-    ],
-    files: [{ id: "f1", name: "instalacion-pozo.jpg", kind: "foto" }],
-  },
 ]
 
-const STORAGE_KEY = "el_suite_projects_data_v1"
-const LIBRARY_STORAGE_KEY = "el_suite_library_data_v1"
+// --- Helper Functions para almacenamiento ---
+
+const STORAGE_KEY = "el_suite_projects_data_v2"
+const LIBRARY_STORAGE_KEY = "el_suite_library_data_v2"
+const PEDIDOS_STORAGE_KEY = "el_suite_pedidos_data_v2"
 
 export function getStoredProjects(): Project[] {
   if (typeof window === "undefined") return PROJECTS
@@ -309,7 +344,6 @@ export function getStoredProjects(): Project[] {
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) && parsed.length > 0 ? parsed : PROJECTS
   } catch (e) {
-    console.error("Error reading projects from localStorage:", e)
     return PROJECTS
   }
 }
@@ -318,9 +352,26 @@ export function saveStoredProjects(projects: Project[]): void {
   if (typeof window === "undefined") return
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects))
+  } catch (e) {}
+}
+
+export function getStoredPedidos(): Pedido[] {
+  if (typeof window === "undefined") return DEFAULT_PEDIDOS
+  try {
+    const raw = localStorage.getItem(PEDIDOS_STORAGE_KEY)
+    if (!raw) return DEFAULT_PEDIDOS
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_PEDIDOS
   } catch (e) {
-    console.error("Error saving projects to localStorage:", e)
+    return DEFAULT_PEDIDOS
   }
+}
+
+export function saveStoredPedidos(pedidos: Pedido[]): void {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(PEDIDOS_STORAGE_KEY, JSON.stringify(pedidos))
+  } catch (e) {}
 }
 
 export function getStoredLibrarySolutions(): LibrarySolution[] {
@@ -331,7 +382,6 @@ export function getStoredLibrarySolutions(): LibrarySolution[] {
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_LIBRARY_SOLUTIONS
   } catch (e) {
-    console.error("Error reading library solutions from localStorage:", e)
     return DEFAULT_LIBRARY_SOLUTIONS
   }
 }
@@ -340,9 +390,7 @@ export function saveStoredLibrarySolutions(solutions: LibrarySolution[]): void {
   if (typeof window === "undefined") return
   try {
     localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(solutions))
-  } catch (e) {
-    console.error("Error saving library solutions to localStorage:", e)
-  }
+  } catch (e) {}
 }
 
 export function calculateProjectBudget(project: Project) {

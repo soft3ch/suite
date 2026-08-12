@@ -1,15 +1,34 @@
 "use client"
 
 import {
+  AlertTriangleIcon,
+  BarChart3Icon,
+  BellIcon,
   BoxesIcon,
+  CalendarDaysIcon,
+  CheckCircle2Icon,
+  ClipboardListIcon,
   ClockIcon,
+  FileCheck2Icon,
   FileTextIcon,
+  HelpCircleIcon,
   LayoutDashboardIcon,
   LibraryIcon,
+  LogOutIcon,
+  PackageIcon,
   PlusIcon,
   ReceiptTextIcon,
   SearchIcon,
+  SendIcon,
+  SettingsIcon,
+  Share2Icon,
+  ShieldCheckIcon,
+  ShoppingCartIcon,
   SunMediumIcon,
+  TruckIcon,
+  UserCheckIcon,
+  UsersIcon,
+  WalletIcon,
   WrenchIcon,
   ZapIcon,
 } from "lucide-react"
@@ -29,134 +48,159 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 
-export type NavKey = "principal" | "buscar" | "recientes" | "biblioteca" | "materiales" | "presupuestos" | "documentacion"
+export type NavKey =
+  | "inicio"
+  | "buscador"
+  | "clientes"
+  | "pedidos"
+  | "agenda"
+  | "ordenes"
+  | "presupuestos"
+  | "aprobaciones"
+  | "compras"
+  | "materiales"
+  | "proveedores"
+  | "equipo"
+  | "resumenes"
+  | "facturacion"
+  | "cuentas"
+  | "viaticos"
+  | "fotovoltaica"
+  | "biblioteca"
+  | "documentacion"
+  | "compartir"
+  | "reportes"
+  | "alertas"
+  | "configuracion"
+  | "usuarios"
 
-const MAIN_NAV: { key: NavKey; label: string; icon: typeof SearchIcon }[] = [
-  { key: "principal", label: "Pantalla Principal", icon: LayoutDashboardIcon },
-  { key: "buscar", label: "Buscar Trabajo", icon: SearchIcon },
-  { key: "recientes", label: "Trabajos Recientes", icon: ClockIcon },
-  { key: "biblioteca", label: "Biblioteca de Soluciones", icon: LibraryIcon },
-]
-
-const AREA_ICONS: Record<AreaKey, typeof ZapIcon> = {
-  automatismo: WrenchIcon,
-  electricidad: ZapIcon,
-  solar: SunMediumIcon,
+type NavGroup = {
+  label: string
+  items: { key: NavKey; label: string; icon: any }[]
 }
 
-const TOOLS: { key: NavKey; label: string; icon: typeof BoxesIcon }[] = [
-  { key: "materiales", label: "Materiales", icon: BoxesIcon },
-  { key: "presupuestos", label: "Presupuestos", icon: ReceiptTextIcon },
-  { key: "documentacion", label: "Documentación", icon: FileTextIcon },
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "OPERACIÓN DIARIA",
+    items: [
+      { key: "inicio", label: "INICIO", icon: LayoutDashboardIcon },
+      { key: "buscador", label: "BUSCADOR GLOBAL", icon: SearchIcon },
+      { key: "clientes", label: "CLIENTES", icon: UsersIcon },
+      { key: "pedidos", label: "PEDIDOS", icon: ClipboardListIcon },
+      { key: "agenda", label: "AGENDA DE TRABAJO", icon: CalendarDaysIcon },
+      { key: "ordenes", label: "ORDENES DE TRABAJO", icon: FileCheck2Icon },
+    ],
+  },
+  {
+    label: "COMERCIAL Y FACTURACIÓN",
+    items: [
+      { key: "presupuestos", label: "PRESUPUESTOS", icon: ReceiptTextIcon },
+      { key: "aprobaciones", label: "APROBACIONES", icon: CheckCircle2Icon },
+      { key: "resumenes", label: "RESÚMENES", icon: FileTextIcon },
+      { key: "facturacion", label: "FACTURACIÓN", icon: WalletIcon },
+      { key: "cuentas", label: "CUENTAS CORRIENTES", icon: WalletIcon },
+    ],
+  },
+  {
+    label: "MATERIALES Y CAMPO",
+    items: [
+      { key: "materiales", label: "MATERIALES", icon: BoxesIcon },
+      { key: "proveedores", label: "PROVEEDORES Y COTIZACIONES", icon: PackageIcon },
+      { key: "compras", label: "COMPRAS", icon: ShoppingCartIcon },
+      { key: "viaticos", label: "VIÁTICOS", icon: TruckIcon },
+      { key: "equipo", label: "EQUIPO Y HORAS", icon: UserCheckIcon },
+    ],
+  },
+  {
+    label: "SOLUCIONES Y TÉCNICA",
+    items: [
+      { key: "fotovoltaica", label: "FOTOVOLTAICA", icon: SunMediumIcon },
+      { key: "biblioteca", label: "BIBLIOTECA DE SOLUCIONES", icon: LibraryIcon },
+      { key: "documentacion", label: "DOCUMENTACIÓN", icon: FileTextIcon },
+      { key: "compartir", label: "COMPARTIR / EXPORTAR", icon: Share2Icon },
+    ],
+  },
+  {
+    label: "CONTROL Y GESTIÓN",
+    items: [
+      { key: "reportes", label: "REPORTES E INDICADORES", icon: BarChart3Icon },
+      { key: "alertas", label: "ALERTAS Y SEGUIMIENTO", icon: BellIcon },
+      { key: "configuracion", label: "CONFIGURACIÓN", icon: SettingsIcon },
+      { key: "usuarios", label: "USUARIOS Y SEGURIDAD", icon: ShieldCheckIcon },
+    ],
+  },
 ]
 
 type AppSidebarProps = {
   activeNav: NavKey
-  activeArea: AreaKey | null
   onNav: (key: NavKey) => void
-  onArea: (key: AreaKey) => void
-  onNewWork: () => void
+  onNewPedido: () => void
 }
 
-export function AppSidebar({
-  activeNav,
-  activeArea,
-  onNav,
-  onArea,
-  onNewWork,
-}: AppSidebarProps) {
+export function AppSidebar({ activeNav, onNav, onNewPedido }: AppSidebarProps) {
   return (
-    <Sidebar>
-      <SidebarHeader className="gap-3 p-3">
-        <div className="flex items-center gap-2 px-1 pt-1">
-          <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <ZapIcon className="size-4" />
+    <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      <SidebarHeader className="gap-3 p-3 bg-slate-900 text-white">
+        <div className="flex items-center gap-2.5 px-1 pt-1">
+          <div className="flex size-9 items-center justify-center rounded-md bg-blue-600 text-white font-bold">
+            <ZapIcon className="size-5" />
           </div>
           <div className="flex flex-col leading-none">
-            <span className="font-mono text-sm font-semibold tracking-tight">
-              EL SUITE
+            <span className="font-mono text-base font-bold tracking-tight text-white">
+              EI SUITE
             </span>
-            <span className="text-xs text-sidebar-foreground/60">
-              Mesa de trabajo
+            <span className="text-[11px] text-slate-400 font-medium">
+              Electricidad Industrial
             </span>
           </div>
         </div>
         <Button
-          onClick={onNewWork}
-          className="w-full justify-start bg-primary font-medium text-primary-foreground hover:bg-primary/90"
+          onClick={onNewPedido}
+          className="w-full justify-center bg-blue-600 font-semibold text-white hover:bg-blue-700 shadow-sm text-xs py-2"
         >
-          <PlusIcon data-icon="inline-start" />
-          Nuevo Trabajo
+          <PlusIcon className="size-4 mr-1.5" />
+          NUEVO PEDIDO
         </Button>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {MAIN_NAV.map((item) => (
-                <SidebarMenuItem key={item.key}>
-                  <SidebarMenuButton
-                    isActive={activeNav === item.key && !activeArea}
-                    onClick={() => onNav(item.key)}
-                  >
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Áreas de dominio</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {(Object.keys(AREAS) as AreaKey[]).map((key) => {
-                const Icon = AREA_ICONS[key]
-                return (
-                  <SidebarMenuItem key={key}>
-                    <SidebarMenuButton
-                      isActive={activeArea === key}
-                      onClick={() => onArea(key)}
-                    >
-                      <Icon />
-                      <span>{AREAS[key].label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Herramientas transversales</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {TOOLS.map((tool) => (
-                <SidebarMenuItem key={tool.key}>
-                  <SidebarMenuButton
-                    isActive={activeNav === tool.key && !activeArea}
-                    onClick={() => onNav(tool.key)}
-                  >
-                    <tool.icon />
-                    <span>{tool.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="px-1 py-2">
+        {NAV_GROUPS.map((group) => (
+          <SidebarGroup key={group.label} className="py-1.5">
+            <SidebarGroupLabel className="text-[10px] font-bold tracking-wider text-slate-400 uppercase px-3 py-1">
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const Icon = item.icon
+                  const isActive = activeNav === item.key
+                  return (
+                    <SidebarMenuItem key={item.key}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => onNav(item.key)}
+                        className={`text-xs font-semibold tracking-wide py-1.5 px-3 rounded-md transition-colors ${
+                          isActive
+                            ? "bg-slate-700 text-white font-bold"
+                            : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                        }`}
+                      >
+                        <Icon className="size-4 mr-2 text-slate-400 group-hover:text-white" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
-        <div className="flex items-center gap-2 rounded-md bg-sidebar-accent px-2 py-2 text-xs text-sidebar-accent-foreground/80">
-          <WrenchIcon className="size-3.5 shrink-0" />
-          <span className="text-pretty leading-snug">
-            Reutiliza soluciones. Duplica y adapta.
-          </span>
+      <SidebarFooter className="p-3 bg-slate-900 border-t border-slate-800 text-slate-400 text-[11px]">
+        <div className="flex items-center gap-2">
+          <WrenchIcon className="size-4 text-blue-400 shrink-0" />
+          <span>v2.0 • Electricidad Industrial</span>
         </div>
       </SidebarFooter>
     </Sidebar>
