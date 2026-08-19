@@ -165,11 +165,18 @@
 }
 
 @media print {
-  body {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+  html, body {
     background: white !important;
     color: black !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
   }
-  header, [role="sidebar"], nav, button:not(.printable-btn), .no-print {
+  header, [data-sidebar="sidebar"], sidebar, nav, .no-print {
     display: none !important;
   }
   .print-only {
@@ -178,6 +185,28 @@
   main {
     padding: 0 !important;
     margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+  .print-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+  table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+    overflow: visible !important;
+  }
+  th, td {
+    word-break: break-word !important;
   }
   .page-break {
     page-break-before: always;

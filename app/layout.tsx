@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { AuthProvider } from '@/lib/auth-context'
 import './globals.css'
 
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
@@ -11,10 +12,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'EL SUITE — Mesa de trabajo técnica',
+  title: 'EI SUITE — Virasoro Electricidad Industrial',
   description:
-    'Mesa de trabajo digital para organizar proyectos técnicos. Busca una solución anterior, duplícala y adáptala a tu nuevo trabajo.',
-  generator: 'v0.app',
+    'Sistema de gestión para Electricidad Industrial. Presupuestos, Resúmenes de trabajo, Cuentas Corrientes y Proveedores.',
   icons: {
     icon: [
       {
@@ -50,7 +50,9 @@ export default function RootLayout({
       className={`light ${geistSans.variable} ${geistMono.variable} bg-background`}
     >
       <body className="font-sans antialiased">
-        <TooltipProvider>{children}</TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+        </AuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

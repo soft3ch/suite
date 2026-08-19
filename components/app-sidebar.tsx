@@ -1,39 +1,20 @@
 "use client"
 
+import * as React from "react"
 import {
-  AlertTriangleIcon,
-  BarChart3Icon,
-  BellIcon,
-  BoxesIcon,
-  CalendarDaysIcon,
-  CheckCircle2Icon,
-  ClipboardListIcon,
-  ClockIcon,
-  FileCheck2Icon,
   FileTextIcon,
-  HelpCircleIcon,
-  LayoutDashboardIcon,
-  LibraryIcon,
   LogOutIcon,
-  PackageIcon,
   PlusIcon,
   ReceiptTextIcon,
-  SearchIcon,
-  SendIcon,
-  SettingsIcon,
-  Share2Icon,
   ShieldCheckIcon,
-  ShoppingCartIcon,
-  SunMediumIcon,
   TruckIcon,
   UserCheckIcon,
   UsersIcon,
-  WalletIcon,
-  WrenchIcon,
   ZapIcon,
 } from "lucide-react"
 
-import { AREAS, type AreaKey } from "@/lib/suite-data"
+import { useAuth } from "@/lib/auth-context"
+import { Button } from "@/components/ui/button"
 import {
   Sidebar,
   SidebarContent,
@@ -46,162 +27,153 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
 
-export type NavKey =
-  | "inicio"
-  | "buscador"
-  | "clientes"
-  | "pedidos"
-  | "agenda"
-  | "ordenes"
-  | "presupuestos"
-  | "aprobaciones"
-  | "compras"
-  | "materiales"
-  | "proveedores"
-  | "equipo"
-  | "resumenes"
-  | "facturacion"
-  | "cuentas"
-  | "viaticos"
-  | "fotovoltaica"
-  | "biblioteca"
-  | "documentacion"
-  | "compartir"
-  | "reportes"
-  | "alertas"
-  | "configuracion"
-  | "usuarios"
-
-type NavGroup = {
-  label: string
-  items: { key: NavKey; label: string; icon: any }[]
-}
-
-const NAV_GROUPS: NavGroup[] = [
-  {
-    label: "OPERACIÓN DIARIA",
-    items: [
-      { key: "inicio", label: "INICIO", icon: LayoutDashboardIcon },
-      { key: "buscador", label: "BUSCADOR GLOBAL", icon: SearchIcon },
-      { key: "clientes", label: "CLIENTES", icon: UsersIcon },
-      { key: "pedidos", label: "PEDIDOS", icon: ClipboardListIcon },
-      { key: "agenda", label: "AGENDA DE TRABAJO", icon: CalendarDaysIcon },
-      { key: "ordenes", label: "ORDENES DE TRABAJO", icon: FileCheck2Icon },
-    ],
-  },
-  {
-    label: "COMERCIAL Y FACTURACIÓN",
-    items: [
-      { key: "presupuestos", label: "PRESUPUESTOS", icon: ReceiptTextIcon },
-      { key: "aprobaciones", label: "APROBACIONES", icon: CheckCircle2Icon },
-      { key: "resumenes", label: "RESÚMENES", icon: FileTextIcon },
-      { key: "facturacion", label: "FACTURACIÓN", icon: WalletIcon },
-      { key: "cuentas", label: "CUENTAS CORRIENTES", icon: WalletIcon },
-    ],
-  },
-  {
-    label: "MATERIALES Y CAMPO",
-    items: [
-      { key: "materiales", label: "MATERIALES", icon: BoxesIcon },
-      { key: "proveedores", label: "PROVEEDORES Y COTIZACIONES", icon: PackageIcon },
-      { key: "compras", label: "COMPRAS", icon: ShoppingCartIcon },
-      { key: "viaticos", label: "VIÁTICOS", icon: TruckIcon },
-      { key: "equipo", label: "EQUIPO Y HORAS", icon: UserCheckIcon },
-    ],
-  },
-  {
-    label: "SOLUCIONES Y TÉCNICA",
-    items: [
-      { key: "fotovoltaica", label: "FOTOVOLTAICA", icon: SunMediumIcon },
-      { key: "biblioteca", label: "BIBLIOTECA DE SOLUCIONES", icon: LibraryIcon },
-      { key: "documentacion", label: "DOCUMENTACIÓN", icon: FileTextIcon },
-      { key: "compartir", label: "COMPARTIR / EXPORTAR", icon: Share2Icon },
-    ],
-  },
-  {
-    label: "CONTROL Y GESTIÓN",
-    items: [
-      { key: "reportes", label: "REPORTES E INDICADORES", icon: BarChart3Icon },
-      { key: "alertas", label: "ALERTAS Y SEGUIMIENTO", icon: BellIcon },
-      { key: "configuracion", label: "CONFIGURACIÓN", icon: SettingsIcon },
-      { key: "usuarios", label: "USUARIOS Y SEGURIDAD", icon: ShieldCheckIcon },
-    ],
-  },
-]
+export type NavKey = "clientes" | "presupuestos" | "resumenes" | "proveedores"
 
 type AppSidebarProps = {
   activeNav: NavKey
   onNav: (key: NavKey) => void
-  onNewPedido: () => void
+  onNewPresupuesto: () => void
+  onNewResumen: () => void
 }
 
-export function AppSidebar({ activeNav, onNav, onNewPedido }: AppSidebarProps) {
+export function AppSidebar({
+  activeNav,
+  onNav,
+  onNewPresupuesto,
+  onNewResumen,
+}: AppSidebarProps) {
+  const { user, logout } = useAuth()
+
+  const navItems = [
+    {
+      key: "clientes" as NavKey,
+      label: "CLIENTES",
+      icon: UsersIcon,
+      description: "Directorio y fichas",
+    },
+    {
+      key: "presupuestos" as NavKey,
+      label: "PRESUPUESTOS",
+      icon: ReceiptTextIcon,
+      description: "Obras y grandes ofertas",
+    },
+    {
+      key: "resumenes" as NavKey,
+      label: "RESÚMENES",
+      icon: FileTextIcon,
+      description: "Cuentas corrientes y tareas",
+    },
+    {
+      key: "proveedores" as NavKey,
+      label: "PROVEEDORES",
+      icon: TruckIcon,
+      description: "Compras y cotizaciones",
+    },
+  ]
+
   return (
-    <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-      <SidebarHeader className="gap-3 p-3 bg-slate-900 text-white">
-        <div className="flex items-center gap-2.5 px-1 pt-1">
-          <div className="flex size-9 items-center justify-center rounded-md bg-blue-600 text-white font-bold">
+    <Sidebar className="border-r border-slate-800 bg-slate-950 text-slate-100">
+      {/* Header */}
+      <SidebarHeader className="gap-3 p-4 bg-slate-900 border-b border-slate-800">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-blue-600 text-white font-black shadow-md shadow-blue-600/30">
             <ZapIcon className="size-5" />
           </div>
           <div className="flex flex-col leading-none">
-            <span className="font-mono text-base font-bold tracking-tight text-white">
+            <span className="font-mono text-base font-black tracking-tight text-white">
               EI SUITE
             </span>
-            <span className="text-[11px] text-slate-400 font-medium">
-              Electricidad Industrial
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+              Virasoro • Ariel Medina
             </span>
           </div>
         </div>
-        <Button
-          onClick={onNewPedido}
-          className="w-full justify-center bg-blue-600 font-semibold text-white hover:bg-blue-700 shadow-sm text-xs py-2"
-        >
-          <PlusIcon className="size-4 mr-1.5" />
-          NUEVO PEDIDO
-        </Button>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-1.5 pt-1">
+          <Button
+            onClick={onNewPresupuesto}
+            size="sm"
+            className="w-full justify-center bg-blue-600 hover:bg-blue-500 font-bold text-white text-[10px] h-8 px-1.5"
+          >
+            + PRESUPUESTO
+          </Button>
+          <Button
+            onClick={onNewResumen}
+            size="sm"
+            variant="outline"
+            className="w-full justify-center border-slate-700 bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px] h-8 px-1.5"
+          >
+            + RESUMEN
+          </Button>
+        </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-1 py-2">
-        {NAV_GROUPS.map((group) => (
-          <SidebarGroup key={group.label} className="py-1.5">
-            <SidebarGroupLabel className="text-[10px] font-bold tracking-wider text-slate-400 uppercase px-3 py-1">
-              {group.label}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items.map((item) => {
-                  const Icon = item.icon
-                  const isActive = activeNav === item.key
-                  return (
-                    <SidebarMenuItem key={item.key}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        onClick={() => onNav(item.key)}
-                        className={`text-xs font-semibold tracking-wide py-1.5 px-3 rounded-md transition-colors ${
-                          isActive
-                            ? "bg-slate-700 text-white font-bold"
-                            : "text-slate-300 hover:bg-slate-800 hover:text-white"
+      {/* Main Navigation */}
+      <SidebarContent className="px-2 py-3 bg-slate-950">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[10px] font-extrabold tracking-wider text-slate-500 uppercase px-3 py-1">
+            Módulos Operativos
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="pt-1">
+            <SidebarMenu className="space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const isActive = activeNav === item.key
+                return (
+                  <SidebarMenuItem key={item.key}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      onClick={() => onNav(item.key)}
+                      className={`text-xs font-bold py-2.5 px-3 rounded-lg transition-all ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                          : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                      }`}
+                    >
+                      <Icon
+                        className={`size-4 mr-2.5 ${
+                          isActive ? "text-white" : "text-slate-400"
                         }`}
-                      >
-                        <Icon className="size-4 mr-2 text-slate-400 group-hover:text-white" />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                      />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-3 bg-slate-900 border-t border-slate-800 text-slate-400 text-[11px]">
-        <div className="flex items-center gap-2">
-          <WrenchIcon className="size-4 text-blue-400 shrink-0" />
-          <span>v2.0 • Electricidad Industrial</span>
-        </div>
+      {/* Footer Profile & Logout */}
+      <SidebarFooter className="p-3 bg-slate-900 border-t border-slate-800 text-slate-400">
+        {user && (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="size-8 rounded-lg bg-slate-800 text-white flex items-center justify-center font-black text-xs shrink-0 border border-slate-700">
+                {user.avatarInitials}
+              </div>
+              <div className="flex flex-col overflow-hidden leading-tight">
+                <span className="text-xs font-extrabold text-white truncate">
+                  {user.name}
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium truncate">
+                  {user.roleLabel}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={logout}
+              title="Cerrar sesión"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
+            >
+              <LogOutIcon className="size-4" />
+            </button>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   )
