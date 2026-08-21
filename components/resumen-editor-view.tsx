@@ -10,6 +10,7 @@ import {
   PrinterIcon,
   SaveIcon,
   SearchIcon,
+  SparklesIcon,
   Trash2Icon,
   WalletIcon,
 } from "lucide-react"
@@ -34,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea"
 type ResumenEditorViewProps = {
   resumenes: Resumen[]
   clientes: Cliente[]
+  trabajos?: TrabajoDiario[]
   onSaveResumen: (resumen: Resumen) => void
   onDeleteResumen: (id: string) => void
   initialClienteId?: string
@@ -50,6 +52,7 @@ const ESTADO_CONFIG: Record<ResumenEstado, { label: string; bg: string }> = {
 export function ResumenEditorView({
   resumenes,
   clientes,
+  trabajos = [],
   onSaveResumen,
   onDeleteResumen,
   initialClienteId,
@@ -65,7 +68,7 @@ export function ResumenEditorView({
   const [clienteNombre, setClienteNombre] = React.useState("")
   const [clienteId, setClienteId] = React.useState<string | undefined>(undefined)
   const [atencionA, setAtencionA] = React.useState("")
-  const [referencia, setReferencia] = React.useState("trabajos preventivo/correctivos solicitados en planta")
+  const [referencia, setReferencia] = React.useState("")
   const [fecha, setFecha] = React.useState(new Date().toLocaleDateString("es-ES"))
   const [saldoAnterior, setSaldoAnterior] = React.useState<number>(0)
   const [estado, setEstado] = React.useState<ResumenEstado>("pendiente")
@@ -89,23 +92,12 @@ export function ResumenEditorView({
     setNumeroResumen(nextNum)
     setClienteNombre(targetCliente ? targetCliente.name : "")
     setClienteId(targetCliente ? targetCliente.id : undefined)
-    setAtencionA(targetCliente?.contact || "Jefe de Mantenimiento")
-    setReferencia("trabajos preventivo/correctivos solicitados en planta")
+    setAtencionA(targetCliente?.contact || "")
+    setReferencia("")
     setFecha(new Date().toLocaleDateString("es-ES"))
     setSaldoAnterior(targetCliente?.saldoActual || 0)
     setEstado("pendiente")
-    setTareas([
-      {
-        id: `tar-${Date.now()}-1`,
-        sector: "MOLINO",
-        fecha: new Date().toLocaleDateString("es-ES"),
-        numeroOrden: "",
-        descripcion: "Mantenimiento preventivo / correctivo realizado...",
-        viaticosQty: 1,
-        viaticosUnitario: 35000,
-        montoTotal: 120000,
-      },
-    ])
+    setTareas([])
     setPagos([])
     setSelectedResumen(null)
     setIsEditing(true)
@@ -137,7 +129,7 @@ export function ResumenEditorView({
         fecha: new Date().toLocaleDateString("es-ES"),
         numeroOrden: "",
         descripcion: "",
-        viaticosQty: 1,
+        viaticosQty: 0,
         viaticosUnitario: 35000,
         montoTotal: 0,
       },
@@ -148,12 +140,12 @@ export function ResumenEditorView({
     setTareas((prev) =>
       prev.map((t) => {
         if (t.id !== id) return t
+        const oldViaticoTotal = (Number(t.viaticosQty) || 0) * (Number(t.viaticosUnitario) || 0)
         const updated = { ...t, [field]: value }
         if (field === "viaticosQty" || field === "viaticosUnitario") {
-          const viaticoTotal = (Number(updated.viaticosQty) || 1) * (Number(updated.viaticosUnitario) || 0)
-          if (updated.montoTotal === 0 || updated.montoTotal < viaticoTotal) {
-            updated.montoTotal = viaticoTotal
-          }
+          const newViaticoTotal = (Number(updated.viaticosQty) || 0) * (Number(updated.viaticosUnitario) || 0)
+          const delta = newViaticoTotal - oldViaticoTotal
+          updated.montoTotal = Math.max(0, (Number(updated.montoTotal) || 0) + delta)
         }
         return updated
       })
@@ -162,6 +154,68 @@ export function ResumenEditorView({
 
   function handleRemoveTarea(id: string) {
     setTareas((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  const pendingTrabajos = React.useMemo(() => {
+    if (!trabajos || trabajos.length === 0) return []
+    return trabajos.filter((t) => {
+      const isPend = t.estadoFacturacion === "pendiente"
+      if (!isPend) return false
+
+      // 1. Direct ID match
+      if (clienteId && t.clienteId && t.clienteId === clienteId) return true
+
+      // 2. Flexible Name match
+      if (clienteNombre && t.clienteNombre) {
+        const s1 = clienteNombre.trim().toLowerCase()
+        const s2 = t.clienteNombre.trim().toLowerCase()
+
+        if (s1 === s2 || s1.includes(s2) || s2.includes(s1)) return true
+
+        const words1 = s1.split(/\s+/).filter((w) => w.length >= 3)
+        const words2 = s2.split(/\s+/).filter((w) => w.length >= 3)
+        const hasCommonWord = words1.some((w) => words2.includes(w))
+        if (hasCommonWord) return true
+      }
+
+      return false
+    })
+  }, [trabajos, clienteId, clienteNombre])
+
+  function handleImportPendingTrabajos() {
+    if (pendingTrabajos.length === 0) return
+
+    const importedTareas = pendingTrabajos.map((pt, idx) => {
+      let desc = pt.descripcionTareas
+      if (pt.materialesExtras && pt.materialesExtras.length > 0) {
+        const matStr = pt.materialesExtras
+          .map((m) => `${m.descripcion} (${m.cantidad}${m.unidad || "ud"})`)
+          .join(", ")
+        desc += `\n[Materiales Extras: ${matStr}]`
+      }
+
+      return {
+        id: `tarea-imp-${pt.id}-${Date.now()}-${idx}`,
+        sector: pt.sector,
+        fecha: pt.fecha,
+        numeroOrden: pt.numeroOrden,
+        descripcion: desc,
+        viaticosQty: pt.viaticosQty,
+        viaticosUnitario: pt.viaticosUnitario,
+        montoTotal: pt.montoTotal,
+        trabajoId: pt.id,
+      }
+    })
+
+    setTareas((prev) => {
+      const isPlaceholderOnly =
+        prev.length === 1 &&
+        prev[0].descripcion.includes("Mantenimiento preventivo")
+      if (isPlaceholderOnly) {
+        return importedTareas
+      }
+      return [...prev, ...importedTareas]
+    })
   }
 
   function handleAddPago() {
@@ -301,7 +355,12 @@ export function ResumenEditorView({
 
               {/* Tareas */}
               {r.tareas.map((t) => {
-                const viaticoTotal = (t.viaticosQty || 1) * (t.viaticosUnitario || 0)
+                const viaticoTotal = (Number(t.viaticosQty) || 0) * (Number(t.viaticosUnitario) || 0)
+                let qtyLabel = ""
+                if (t.viaticosQty === 0.5) qtyLabel = "1/2 viático"
+                else if (t.viaticosQty === 1) qtyLabel = "1 viático"
+                else if (t.viaticosQty > 1) qtyLabel = `${t.viaticosQty} viáticos`
+
                 return (
                   <TableRow key={t.id} className="align-top">
                     <TableCell className="font-bold text-slate-900">{t.sector}</TableCell>
@@ -313,15 +372,17 @@ export function ResumenEditorView({
                       {t.descripcion}
                     </TableCell>
                     <TableCell className="text-center font-mono text-[11px]">
-                      {t.viaticosUnitario > 0 ? (
-                        <div className="font-semibold text-slate-800">
-                          {t.viaticosQty || 1} x ${t.viaticosUnitario.toLocaleString("es-ES")}
-                          <div className="text-[10px] text-slate-500 font-mono">
-                            (${viaticoTotal.toLocaleString("es-ES")})
-                          </div>
+                      {viaticoTotal > 0 ? (
+                        <div className="font-bold text-slate-900">
+                          $ {viaticoTotal.toLocaleString("es-ES")}
+                          {qtyLabel && (
+                            <div className="text-[10px] text-slate-500 font-normal font-sans">
+                              ({qtyLabel})
+                            </div>
+                          )}
                         </div>
                       ) : (
-                        <span className="text-slate-400">-</span>
+                        <span className="text-slate-400 font-normal">Sin viático</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right font-mono font-bold text-slate-900">
@@ -506,6 +567,22 @@ export function ResumenEditorView({
                   <PlusIcon className="size-3.5 mr-1" /> Añadir Tarea
                 </Button>
               </CardHeader>
+
+              {pendingTrabajos.length > 0 && (
+                <div className="bg-amber-50 border-b border-amber-200 p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                    <SparklesIcon className="size-4 text-amber-600 animate-bounce" />
+                    <span>¡Hay {pendingTrabajos.length} trabajo(s) diario(s) pendiente(s) de facturar para {clienteNombre}!</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleImportPendingTrabajos}
+                    className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs h-7"
+                  >
+                    ⚡ Cargar Trabajos Pendientes ({pendingTrabajos.length})
+                  </Button>
+                </div>
+              )}
               <CardContent className="p-0">
                 <div className="divide-y divide-slate-100">
                   {tareas.map((tarea, idx) => (

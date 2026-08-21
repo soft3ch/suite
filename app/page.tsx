@@ -1,45 +1,59 @@
 "use client"
 
 import * as React from "react"
-
+import { DatabaseIcon, RefreshCwIcon, ZapIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import {
+  deleteCategoriaDb,
   deleteClienteDb,
+  deleteEmpleadoDb,
   deletePresupuestoDb,
   deleteProveedorDb,
   deleteResumenDb,
+  deleteTrabajoDiarioDb,
+  fetchCategoriasDb,
   fetchClientesDb,
+  fetchEmpleadosDb,
   fetchPresupuestosDb,
   fetchProveedoresDb,
   fetchResumenesDb,
+  fetchTrabajosDiariosDb,
+  saveCategoriaDb,
   saveClienteDb,
+  saveEmpleadoDb,
   savePresupuestoDb,
   saveProveedorDb,
   saveResumenDb,
+  saveTrabajoDiarioDb,
 } from "@/lib/supabase/db-service"
 import {
   getStoredClientes,
   getStoredPresupuestos,
   getStoredProveedores,
   getStoredResumenes,
+  type CategoriaEmpleado,
   type Cliente,
+  type Empleado,
   type Presupuesto,
   type Proveedor,
   type Resumen,
+  type TrabajoDiario,
 } from "@/lib/suite-data"
 import { AppSidebar, type NavKey } from "@/components/app-sidebar"
 import { ClientesView } from "@/components/clientes-view"
+import { ConfiguracionTarifasView } from "@/components/configuracion-tarifas-view"
 import { LoginView } from "@/components/login-view"
 import { PresupuestoEditorView } from "@/components/presupuesto-editor-view"
 import { ProveedoresView } from "@/components/proveedores-view"
 import { ResumenEditorView } from "@/components/resumen-editor-view"
+import { TrabajosView } from "@/components/trabajos-view"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { DatabaseIcon, RefreshCwIcon, ZapIcon } from "lucide-react"
 
 function MainDashboard() {
   const { user, isAuthenticated } = useAuth()
@@ -48,6 +62,10 @@ function MainDashboard() {
   const [presupuestos, setPresupuestos] = React.useState<Presupuesto[]>([])
   const [resumenes, setResumenes] = React.useState<Resumen[]>([])
   const [proveedores, setProveedores] = React.useState<Proveedor[]>([])
+  const [categorias, setCategorias] = React.useState<CategoriaEmpleado[]>([])
+  const [empleados, setEmpleados] = React.useState<Empleado[]>([])
+  const [trabajos, setTrabajos] = React.useState<TrabajoDiario[]>([])
+
   const [isLoaded, setIsLoaded] = React.useState(false)
   const [isSyncing, setIsSyncing] = React.useState(false)
 
@@ -58,17 +76,23 @@ function MainDashboard() {
   async function loadDataFromDb() {
     setIsSyncing(true)
     try {
-      const [cliData, presData, resData, provData] = await Promise.all([
+      const [cliData, presData, resData, provData, catData, empData, trabData] = await Promise.all([
         fetchClientesDb(),
         fetchPresupuestosDb(),
         fetchResumenesDb(),
         fetchProveedoresDb(),
+        fetchCategoriasDb(),
+        fetchEmpleadosDb(),
+        fetchTrabajosDiariosDb(),
       ])
 
       setClientes(cliData)
       setPresupuestos(presData)
       setResumenes(resData)
       setProveedores(provData)
+      setCategorias(catData)
+      setEmpleados(empData)
+      setTrabajos(trabData)
     } catch (e) {
       console.warn("Could not load from DB, using fallback data:", e)
       setClientes(getStoredClientes())
@@ -87,17 +111,16 @@ function MainDashboard() {
 
   // ── CLIENTES DB HANDLERS ────────────────────────────────────────────────
   async function handleSaveCliente(cliente: Cliente) {
-    // Optimistic UI update
     setClientes((prev) => {
       const exists = prev.some((c) => c.id === cliente.id)
-      return exists ? prev.map((c) => (c.id === cliente.id ? cliente : c)) : [cliente, ...prev]
+      if (exists) return prev.map((c) => (c.id === cliente.id ? cliente : c))
+      return [cliente, ...prev]
     })
-
     try {
       const saved = await saveClienteDb(cliente)
       setClientes((prev) => prev.map((c) => (c.id === cliente.id ? saved : c)))
-    } catch (err) {
-      console.error("Error saving cliente to Supabase:", err)
+    } catch (e) {
+      console.error("Error saving cliente to Supabase:", e)
     }
   }
 
@@ -105,23 +128,23 @@ function MainDashboard() {
     setClientes((prev) => prev.filter((c) => c.id !== id))
     try {
       await deleteClienteDb(id)
-    } catch (err) {
-      console.error("Error deleting cliente from Supabase:", err)
+    } catch (e) {
+      console.error("Error deleting cliente from Supabase:", e)
     }
   }
 
-  // ── PRESUPUESTOS DB HANDLERS ────────────────────────────────────────────
+  // ── PRESUPUESTOS DB HANDLERS ─────────────────────────────────────────────
   async function handleSavePresupuesto(presupuesto: Presupuesto) {
     setPresupuestos((prev) => {
       const exists = prev.some((p) => p.id === presupuesto.id)
-      return exists ? prev.map((p) => (p.id === presupuesto.id ? presupuesto : p)) : [presupuesto, ...prev]
+      if (exists) return prev.map((p) => (p.id === presupuesto.id ? presupuesto : p))
+      return [presupuesto, ...prev]
     })
-
     try {
       const saved = await savePresupuestoDb(presupuesto)
       setPresupuestos((prev) => prev.map((p) => (p.id === presupuesto.id ? saved : p)))
-    } catch (err) {
-      console.error("Error saving presupuesto to Supabase:", err)
+    } catch (e) {
+      console.error("Error saving presupuesto to Supabase:", e)
     }
   }
 
@@ -129,29 +152,26 @@ function MainDashboard() {
     setPresupuestos((prev) => prev.filter((p) => p.id !== id))
     try {
       await deletePresupuestoDb(id)
-    } catch (err) {
-      console.error("Error deleting presupuesto from Supabase:", err)
+    } catch (e) {
+      console.error("Error deleting presupuesto from Supabase:", e)
     }
   }
 
-  // ── RESÚMENES DB HANDLERS ───────────────────────────────────────────────
+  // ── RESÚMENES DB HANDLERS ────────────────────────────────────────────────
   async function handleSaveResumen(resumen: Resumen) {
     setResumenes((prev) => {
       const exists = prev.some((r) => r.id === resumen.id)
-      return exists ? prev.map((r) => (r.id === resumen.id ? resumen : r)) : [resumen, ...prev]
+      if (exists) return prev.map((r) => (r.id === resumen.id ? resumen : r))
+      return [resumen, ...prev]
     })
-
-    if (resumen.clienteId) {
-      setClientes((prev) =>
-        prev.map((c) => (c.id === resumen.clienteId ? { ...c, saldoActual: resumen.saldoFinal } : c))
-      )
-    }
-
     try {
       const saved = await saveResumenDb(resumen)
       setResumenes((prev) => prev.map((r) => (r.id === resumen.id ? saved : r)))
-    } catch (err) {
-      console.error("Error saving resumen to Supabase:", err)
+
+      // Reload DB to sync updated status of linked trabajos and client balance
+      loadDataFromDb()
+    } catch (e) {
+      console.error("Error saving resumen to Supabase:", e)
     }
   }
 
@@ -159,23 +179,23 @@ function MainDashboard() {
     setResumenes((prev) => prev.filter((r) => r.id !== id))
     try {
       await deleteResumenDb(id)
-    } catch (err) {
-      console.error("Error deleting resumen from Supabase:", err)
+    } catch (e) {
+      console.error("Error deleting resumen from Supabase:", e)
     }
   }
 
-  // ── PROVEEDORES DB HANDLERS ─────────────────────────────────────────────
+  // ── PROVEEDORES DB HANDLERS ──────────────────────────────────────────────
   async function handleSaveProveedor(proveedor: Proveedor) {
     setProveedores((prev) => {
       const exists = prev.some((p) => p.id === proveedor.id)
-      return exists ? prev.map((p) => (p.id === proveedor.id ? proveedor : p)) : [proveedor, ...prev]
+      if (exists) return prev.map((p) => (p.id === proveedor.id ? proveedor : p))
+      return [proveedor, ...prev]
     })
-
     try {
       const saved = await saveProveedorDb(proveedor)
       setProveedores((prev) => prev.map((p) => (p.id === proveedor.id ? saved : p)))
-    } catch (err) {
-      console.error("Error saving proveedor to Supabase:", err)
+    } catch (e) {
+      console.error("Error saving proveedor to Supabase:", e)
     }
   }
 
@@ -183,19 +203,89 @@ function MainDashboard() {
     setProveedores((prev) => prev.filter((p) => p.id !== id))
     try {
       await deleteProveedorDb(id)
-    } catch (err) {
-      console.error("Error deleting proveedor from Supabase:", err)
+    } catch (e) {
+      console.error("Error deleting proveedor from Supabase:", e)
     }
   }
 
-  // Navigation helpers from client card
-  function handleCreatePresupuestoForCliente(cliente: Cliente) {
-    setTargetClienteIdForNewItem(cliente.id)
+  // ── TRABAJOS DIARIOS DB HANDLERS ─────────────────────────────────────────
+  async function handleSaveTrabajo(trabajo: TrabajoDiario) {
+    setTrabajos((prev) => {
+      const exists = prev.some((t) => t.id === trabajo.id)
+      if (exists) return prev.map((t) => (t.id === trabajo.id ? trabajo : t))
+      return [trabajo, ...prev]
+    })
+    try {
+      const saved = await saveTrabajoDiarioDb(trabajo)
+      setTrabajos((prev) => prev.map((t) => (t.id === trabajo.id ? saved : t)))
+    } catch (e) {
+      console.error("Error saving trabajo diario to Supabase:", e)
+    }
+  }
+
+  async function handleDeleteTrabajo(id: string) {
+    setTrabajos((prev) => prev.filter((t) => t.id !== id))
+    try {
+      await deleteTrabajoDiarioDb(id)
+    } catch (e) {
+      console.error("Error deleting trabajo diario from Supabase:", e)
+    }
+  }
+
+  // ── CATEGORÍAS & EMPLEADOS DB HANDLERS ──────────────────────────────────
+  async function handleSaveCategoria(categoria: CategoriaEmpleado) {
+    setCategorias((prev) => {
+      const exists = prev.some((c) => c.id === categoria.id)
+      if (exists) return prev.map((c) => (c.id === categoria.id ? categoria : c))
+      return [...prev, categoria]
+    })
+    try {
+      const saved = await saveCategoriaDb(categoria)
+      setCategorias((prev) => prev.map((c) => (c.id === categoria.id ? saved : c)))
+    } catch (e) {
+      console.error("Error saving categoria to Supabase:", e)
+    }
+  }
+
+  async function handleDeleteCategoria(id: string) {
+    setCategorias((prev) => prev.filter((c) => c.id !== id))
+    try {
+      await deleteCategoriaDb(id)
+    } catch (e) {
+      console.error("Error deleting categoria from Supabase:", e)
+    }
+  }
+
+  async function handleSaveEmpleado(empleado: Empleado) {
+    setEmpleados((prev) => {
+      const exists = prev.some((e) => e.id === empleado.id)
+      if (exists) return prev.map((e) => (e.id === empleado.id ? empleado : e))
+      return [...prev, empleado]
+    })
+    try {
+      const saved = await saveEmpleadoDb(empleado)
+      setEmpleados((prev) => prev.map((e) => (e.id === empleado.id ? saved : e)))
+    } catch (e) {
+      console.error("Error saving empleado to Supabase:", e)
+    }
+  }
+
+  async function handleDeleteEmpleado(id: string) {
+    setEmpleados((prev) => prev.filter((e) => e.id !== id))
+    try {
+      await deleteEmpleadoDb(id)
+    } catch (e) {
+      console.error("Error deleting empleado from Supabase:", e)
+    }
+  }
+
+  function handleCreatePresupuestoForCliente(clienteId: string) {
+    setTargetClienteIdForNewItem(clienteId)
     setActiveNav("presupuestos")
   }
 
-  function handleCreateResumenForCliente(cliente: Cliente) {
-    setTargetClienteIdForNewItem(cliente.id)
+  function handleCreateResumenForCliente(clienteId: string) {
+    setTargetClienteIdForNewItem(clienteId)
     setActiveNav("resumenes")
   }
 
@@ -243,11 +333,24 @@ function MainDashboard() {
           />
         )
 
+      case "trabajos":
+        return (
+          <TrabajosView
+            trabajos={trabajos}
+            clientes={clientes}
+            categorias={categorias}
+            empleados={empleados}
+            onSaveTrabajo={handleSaveTrabajo}
+            onDeleteTrabajo={handleDeleteTrabajo}
+          />
+        )
+
       case "resumenes":
         return (
           <ResumenEditorView
             resumenes={resumenes}
             clientes={clientes}
+            trabajos={trabajos}
             onSaveResumen={handleSaveResumen}
             onDeleteResumen={handleDeleteResumen}
             initialClienteId={targetClienteIdForNewItem}
@@ -262,14 +365,28 @@ function MainDashboard() {
             onDeleteProveedor={handleDeleteProveedor}
           />
         )
+
+      case "tarifas":
+        return (
+          <ConfiguracionTarifasView
+            categorias={categorias}
+            empleados={empleados}
+            onSaveCategoria={handleSaveCategoria}
+            onDeleteCategoria={handleDeleteCategoria}
+            onSaveEmpleado={handleSaveEmpleado}
+            onDeleteEmpleado={handleDeleteEmpleado}
+          />
+        )
     }
   }
 
   const navTitles: Record<NavKey, string> = {
     clientes: "/ Clientes y Cuentas",
     presupuestos: "/ Presupuestos Formales",
+    trabajos: "/ Trabajos Diarios Realizados",
     resumenes: "/ Resúmenes de Trabajo (Cuentas Corrientes)",
     proveedores: "/ Directorio de Proveedores",
+    tarifas: "/ Tarifas por Hora y Nómina de Personal",
   }
 
   return (
@@ -289,53 +406,38 @@ function MainDashboard() {
           setActiveNav("resumenes")
         }}
       />
-
-      <SidebarInset>
-        {/* Header bar */}
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-slate-900 text-white px-4 no-print shadow-sm">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1 text-white hover:bg-slate-800 rounded" />
-            <Separator orientation="vertical" className="mr-1 h-5 bg-slate-700" />
-            <div className="flex items-center gap-2">
-              <ZapIcon className="size-4 text-blue-400" />
-              <span className="font-mono text-sm font-black tracking-tight text-white">
-                EI SUITE
-              </span>
-              <span className="text-xs text-slate-400 font-medium hidden sm:block">
-                Electricidad Industrial
-              </span>
-            </div>
-            <span className="text-xs text-slate-400 ml-1 font-mono hidden sm:block">
-              {navTitles[activeNav]}
+      <SidebarInset className="bg-slate-50 flex flex-col min-h-screen">
+        {/* Top Navbar Header */}
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white/95 px-4 backdrop-blur no-print">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger className="text-slate-700 hover:text-slate-900" />
+            <Separator orientation="vertical" className="h-5 bg-slate-200" />
+            <span className="text-xs font-mono font-bold tracking-tight text-slate-800 flex items-center gap-1.5">
+              <ZapIcon className="size-4 text-amber-500 fill-amber-500" />
+              EI SUITE
+              <span className="text-slate-400 font-normal">{navTitles[activeNav]}</span>
             </span>
           </div>
 
-          {/* Right Header Status */}
-          <div className="flex items-center gap-3">
-            <button
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
               onClick={loadDataFromDb}
-              title="Sincronizar datos con Supabase"
               disabled={isSyncing}
-              className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-md border border-slate-700 transition-colors"
+              className="text-[11px] h-7 gap-1 font-bold border-slate-200"
             >
-              <RefreshCwIcon className={`size-3 ${isSyncing ? "animate-spin text-blue-400" : ""}`} />
-              <span className="hidden sm:inline">Sincronizar DB</span>
-            </button>
-
-            {user && (
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700">
-                <span className="size-2 rounded-full bg-emerald-400" />
-                <span className="font-bold text-white">{user.name}</span>
-                <span className="text-[10px] text-slate-400 font-mono">({user.role})</span>
-              </div>
-            )}
+              <RefreshCwIcon className={`size-3 text-blue-600 ${isSyncing ? "animate-spin" : ""}`} />
+              {isSyncing ? "Sincronizando DB..." : "Sincronizar"}
+            </Button>
+            <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-full text-[10px] font-extrabold border border-emerald-200">
+              <DatabaseIcon className="size-3 text-emerald-600" />
+              Supabase DB Conectada
+            </div>
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="min-h-[calc(100svh-3.5rem)] bg-slate-50">
-          {renderView()}
-        </main>
+        <main className="flex-1 pb-12">{renderView()}</main>
       </SidebarInset>
     </SidebarProvider>
   )

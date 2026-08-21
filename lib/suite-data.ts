@@ -60,15 +60,75 @@ export type Presupuesto = {
   notasCondiciones?: string
 }
 
+export type CategoriaEmpleado = {
+  id: string
+  nombreCategoria: string
+  precioHora: number
+  activo: boolean
+}
+
+export type Empleado = {
+  id: string
+  nombreCompleto: string
+  categoriaId?: string
+  telefono?: string
+  activo: boolean
+}
+
+export type TrabajoEmpleado = {
+  id: string
+  trabajoId?: string
+  empleadoId?: string
+  categoriaId?: string
+  nombreEmpleadoRol: string
+  horas: number
+  precioHora: number
+  total: number
+}
+
+export type TrabajoMaterialExtra = {
+  id: string
+  trabajoId?: string
+  descripcion: string
+  unidad?: string // 'ud', 'mts', 'kg', 'global'
+  cantidad: number
+  precioUnitario: number
+  total: number
+}
+
+export type TrabajoEstadoFacturacion = "pendiente" | "facturado"
+
+export type TrabajoDiario = {
+  id: string
+  clienteId?: string
+  clienteNombre: string
+  fecha: string
+  sector: string
+  numeroOrden?: string
+  descripcionTareas: string
+  viaticosQty: number // 0, 0.5, 1, 1.5, 2, etc.
+  viaticosUnitario: number
+  empleados: TrabajoEmpleado[]
+  materialesExtras: TrabajoMaterialExtra[]
+  totalManoObra: number
+  totalMaterialesExtras: number
+  montoTotal: number
+  estadoFacturacion: TrabajoEstadoFacturacion
+  resumenId?: string
+}
+
 export type ResumenTarea = {
   id: string
   sector: string // ej. 'MOLINO', 'RINCON', 'SECADERO 3', 'CHIPERA', 'CALDERA', 'OFICINA'
   fecha: string
   numeroOrden?: string // ej. 'ORDEN 190'
   descripcion: string
-  viaticosQty: number
+  viaticosQty: number // 0, 0.5, 1, 2
   viaticosUnitario: number
+  materialesExtrasTotal?: number
+  materialesDescripcion?: string
   montoTotal: number
+  trabajoId?: string
 }
 
 export type ResumenPago = {

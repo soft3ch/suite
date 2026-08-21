@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import {
+  ClockIcon,
   FileTextIcon,
   LogOutIcon,
   PlusIcon,
@@ -10,6 +11,7 @@ import {
   TruckIcon,
   UserCheckIcon,
   UsersIcon,
+  WrenchIcon,
   ZapIcon,
 } from "lucide-react"
 
@@ -28,7 +30,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-export type NavKey = "clientes" | "presupuestos" | "resumenes" | "proveedores"
+export type NavKey = "clientes" | "presupuestos" | "resumenes" | "trabajos" | "proveedores" | "tarifas"
 
 type AppSidebarProps = {
   activeNav: NavKey
@@ -59,16 +61,28 @@ export function AppSidebar({
       description: "Obras y grandes ofertas",
     },
     {
+      key: "trabajos" as NavKey,
+      label: "TRABAJOS",
+      icon: WrenchIcon,
+      description: "Registro día a día",
+    },
+    {
       key: "resumenes" as NavKey,
       label: "RESÚMENES",
       icon: FileTextIcon,
-      description: "Cuentas corrientes y tareas",
+      description: "Cuentas corrientes y facturación",
     },
     {
       key: "proveedores" as NavKey,
       label: "PROVEEDORES",
       icon: TruckIcon,
       description: "Compras y cotizaciones",
+    },
+    {
+      key: "tarifas" as NavKey,
+      label: "TARIFAS & PERSONAL",
+      icon: ClockIcon,
+      description: "Categorías $/hora y empleados",
     },
   ]
 
@@ -126,16 +140,14 @@ export function AppSidebar({
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => onNav(item.key)}
-                      className={`text-xs font-bold py-2.5 px-3 rounded-lg transition-all ${
-                        isActive
+                      className={`text-xs font-bold py-2.5 px-3 rounded-lg transition-all ${isActive
                           ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
                           : "text-slate-300 hover:bg-slate-900 hover:text-white"
-                      }`}
+                        }`}
                     >
                       <Icon
-                        className={`size-4 mr-2.5 ${
-                          isActive ? "text-white" : "text-slate-400"
-                        }`}
+                        className={`size-4 mr-2.5 ${isActive ? "text-white" : "text-slate-400"
+                          }`}
                       />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
