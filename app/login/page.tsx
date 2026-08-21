@@ -117,7 +117,7 @@ export default function LoginPage() {
             EI SUITE
           </h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-            Virasoro Electricidad Industrial • Ariel Medina
+            Virasoro Electricidad Industrial
           </p>
         </div>
 
@@ -126,7 +126,7 @@ export default function LoginPage() {
           <CardHeader className="pb-3 border-b border-slate-800">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold text-white">
-                {mode === "signin" ? "Iniciar Sesión" : "Crear Nueva Cuenta"}
+                {mode === "signin" ? "Ingresar" : "Crear Nueva Cuenta"}
               </CardTitle>
               <button
                 type="button"
@@ -137,12 +137,10 @@ export default function LoginPage() {
                 }}
                 className="text-xs text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2"
               >
-                {mode === "signin" ? "Registrarse" : "Ya tengo cuenta"}
+                {mode === "signin"}
               </button>
             </div>
-            <CardDescription className="text-xs text-slate-400">
-              Autenticación con Supabase (Correo y Contraseña).
-            </CardDescription>
+
           </CardHeader>
 
           <CardContent className="pt-5 space-y-5">
@@ -216,47 +214,14 @@ export default function LoginPage() {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-800" />
               </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-bold">
-                <span className="bg-slate-900 px-3 text-slate-500">
-                  Acceso Rápido por Perfil (Demo)
-                </span>
-              </div>
+
             </div>
 
-            {/* Quick Demo Switchers */}
-            {/* <div className="grid grid-cols-1 gap-2">
-              {DEMO_USERS.map((demo) => (
-                <button
-                  key={demo.id}
-                  type="button"
-                  onClick={() => handleQuickDemoSelect(demo)}
-                  className="flex items-center justify-between p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800 hover:border-slate-700 transition-all text-left group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg bg-slate-800 group-hover:bg-blue-600 text-white font-black text-xs flex items-center justify-center transition-colors">
-                      {demo.avatarInitials}
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-200 group-hover:text-white">
-                        {demo.name}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        {demo.email} • {demo.roleLabel}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 group-hover:bg-blue-500 group-hover:text-white uppercase transition-colors">
-                    {demo.role}
-                  </span>
-                </button>
-              ))}
-            </div> */}
+
           </CardContent>
         </Card>
 
-        <p className="text-center text-[11px] text-slate-500 font-medium">
-          Conexión segura protegida por Next.js Proxy y Supabase Auth
-        </p>
+
       </div>
     </div>
   )

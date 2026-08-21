@@ -162,7 +162,7 @@ export function ClientesView({
           </p>
         </div>
         <Button onClick={openCreateModal} className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">
-          <UserPlusIcon className="size-4 mr-1.5" /> + NUEVO CLIENTE
+          <UserPlusIcon className="size-4 mr-1.5" />  NUEVO CLIENTE
         </Button>
       </div>
 
@@ -272,14 +272,14 @@ export function ClientesView({
                       onClick={() => onCreateResumenForCliente(selectedCliente)}
                       className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
                     >
-                      <PlusIcon className="size-3.5 mr-1" /> + RESUMEN
+                      <PlusIcon className="size-3.5 mr-1" />  RESUMEN
                     </Button>
                     <Button
                       onClick={() => onCreatePresupuestoForCliente(selectedCliente)}
                       variant="outline"
                       className="border-slate-300 font-bold text-xs hover:bg-slate-100"
                     >
-                      <PlusIcon className="size-3.5 mr-1" /> + PRESUPUESTO
+                      <PlusIcon className="size-3.5 mr-1" />  PRESUPUESTO
                     </Button>
                   </div>
                 </div>
@@ -290,8 +290,8 @@ export function ClientesView({
                 <button
                   onClick={() => setActiveTab("resumenes")}
                   className={`px-4 py-2.5 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5 ${activeTab === "resumenes"
-                      ? "border-slate-900 text-slate-900"
-                      : "border-transparent text-slate-400 hover:text-slate-700"
+                    ? "border-slate-900 text-slate-900"
+                    : "border-transparent text-slate-400 hover:text-slate-700"
                     }`}
                 >
                   <FileTextIcon className="size-4" />
@@ -300,8 +300,8 @@ export function ClientesView({
                 <button
                   onClick={() => setActiveTab("presupuestos")}
                   className={`px-4 py-2.5 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5 ${activeTab === "presupuestos"
-                      ? "border-slate-900 text-slate-900"
-                      : "border-transparent text-slate-400 hover:text-slate-700"
+                    ? "border-slate-900 text-slate-900"
+                    : "border-transparent text-slate-400 hover:text-slate-700"
                     }`}
                 >
                   <ReceiptTextIcon className="size-4" />

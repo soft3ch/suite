@@ -32,6 +32,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { SolicitudCotizacionDialog } from "@/components/solicitud-cotizacion-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
@@ -68,6 +76,7 @@ export function PresupuestoEditorView({
   const [isEditing, setIsEditing] = React.useState(false)
   const [isPrintMode, setIsPrintMode] = React.useState(false)
   const [search, setSearch] = React.useState("")
+  const [deletingPresupuestoId, setDeletingPresupuestoId] = React.useState<string | null>(null)
 
   // Form State
   const [numero, setNumero] = React.useState(428)
@@ -450,6 +459,16 @@ export function PresupuestoEditorView({
             <ArrowLeftIcon className="size-4 mr-1" /> Volver al listado
           </Button>
           <div className="flex items-center gap-2">
+            {selectedPresupuesto?.id && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingPresupuestoId(selectedPresupuesto.id)}
+                className="border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold"
+              >
+                <Trash2Icon className="size-3.5 mr-1" /> Eliminar
+              </Button>
+            )}
             <Button onClick={handleSave} className="bg-slate-900 text-white font-bold text-xs">
               <SaveIcon className="size-4 mr-1.5" /> GUARDAR PRESUPUESTO
             </Button>
@@ -877,6 +896,14 @@ export function PresupuestoEditorView({
                     >
                       Editar
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setDeletingPresupuestoId(p.id)}
+                      className="text-[10px] h-7 px-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold"
+                    >
+                      <Trash2Icon className="size-3 mr-1" /> Eliminar
+                    </Button>
                   </TableCell>
                 </TableRow>
               )
@@ -891,6 +918,43 @@ export function PresupuestoEditorView({
         proveedores={proveedores}
         onApplyWinningQuote={handleApplyWinningQuote}
       />
+
+      {/* Modal de Confirmación de Eliminación */}
+      <Dialog open={!!deletingPresupuestoId} onOpenChange={(open) => !open && setDeletingPresupuestoId(null)}>
+        <DialogContent className="sm:max-w-md bg-white text-slate-900">
+          <DialogHeader>
+            <DialogTitle className="text-base font-black text-slate-900">
+              ¿Eliminar presupuesto?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Esta acción eliminará de forma permanente el presupuesto y todos sus ítems asociados de Supabase.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeletingPresupuestoId(null)}
+              className="text-xs font-bold"
+            >
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs"
+              onClick={() => {
+                if (deletingPresupuestoId) {
+                  onDeletePresupuesto(deletingPresupuestoId)
+                  setDeletingPresupuestoId(null)
+                  setIsEditing(false)
+                }
+              }}
+            >
+              Confirmar Eliminación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -18,6 +18,14 @@ import type { Cliente, Resumen, ResumenEstado, ResumenPago, ResumenTarea } from 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -50,6 +58,7 @@ export function ResumenEditorView({
   const [isEditing, setIsEditing] = React.useState(false)
   const [isPrintMode, setIsPrintMode] = React.useState(false)
   const [search, setSearch] = React.useState("")
+  const [deletingResumenId, setDeletingResumenId] = React.useState<string | null>(null)
 
   // Form State
   const [numeroResumen, setNumeroResumen] = React.useState(12)
@@ -374,9 +383,21 @@ export function ResumenEditorView({
           <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} className="text-xs font-bold">
             <ArrowLeftIcon className="size-4 mr-1" /> Volver al listado
           </Button>
-          <Button onClick={handleSave} className="bg-slate-900 text-white font-bold text-xs">
-            <SaveIcon className="size-4 mr-1.5" /> GUARDAR RESUMEN
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedResumen?.id && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingResumenId(selectedResumen.id)}
+                className="border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold"
+              >
+                <Trash2Icon className="size-3.5 mr-1" /> Eliminar
+              </Button>
+            )}
+            <Button onClick={handleSave} className="bg-slate-900 text-white font-bold text-xs">
+              <SaveIcon className="size-4 mr-1.5" /> GUARDAR RESUMEN
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -754,6 +775,14 @@ export function ResumenEditorView({
                     >
                       Editar
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setDeletingResumenId(r.id)}
+                      className="text-[10px] h-7 px-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold"
+                    >
+                      <Trash2Icon className="size-3 mr-1" /> Eliminar
+                    </Button>
                   </TableCell>
                 </TableRow>
               )
@@ -761,6 +790,43 @@ export function ResumenEditorView({
           </TableBody>
         </Table>
       </div>
+
+      {/* Modal de Confirmación de Eliminación de Resumen */}
+      <Dialog open={!!deletingResumenId} onOpenChange={(open) => !open && setDeletingResumenId(null)}>
+        <DialogContent className="sm:max-w-md bg-white text-slate-900">
+          <DialogHeader>
+            <DialogTitle className="text-base font-black text-slate-900">
+              ¿Eliminar resumen de trabajo?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Esta acción eliminará de forma permanente el resumen, sus tareas y pagos asociados de Supabase.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeletingResumenId(null)}
+              className="text-xs font-bold"
+            >
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs"
+              onClick={() => {
+                if (deletingResumenId) {
+                  onDeleteResumen(deletingResumenId)
+                  setDeletingResumenId(null)
+                  setIsEditing(false)
+                }
+              }}
+            >
+              Confirmar Eliminación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
